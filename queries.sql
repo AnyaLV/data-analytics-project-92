@@ -8,7 +8,7 @@ FROM customers
 -- Далее получившиеся результаты были отсортированы в порядке убывания и выбраны первые 10 продавцов. 
 select e.first_name||' '||e.last_name as name,
 		count (distinct sales_id) as operations,
-		round(sum(p.price* s.quantity),0) as income
+		round(floor(sum(p.price* s.quantity)),0) as income
 from sales s inner join employees e on s.sales_person_id = e.employee_id 
 			inner join products p on s.product_id = p.product_id 
 group by 1
@@ -34,23 +34,24 @@ where rn <=10
 -- Далее получившиеся результаты сравнили со средним значением выручки по всем продавцам и оставили только те, которые ниже среднего.
 with table1 as (
 				select e.first_name||' '||e.last_name as name,
+						round(avg(p.price* s.quantity),0) as average_income,
 						round(sum(p.price* s.quantity),0) as income
 				from sales s inner join employees e on s.sales_person_id = e.employee_id 
 							inner join products p on s.product_id = p.product_id 
 				group by 1
 				)
-select name, income
+select name, average_income
 from table1
 where income < (select avg(income)from table1)
-order by income asc
+order by average_income asc
 
 --Задача day_of_the_week_income
 -- В данном запросе произведено объединение трех таблиц для расчета выручки по каждому продавцу в разрезе дня недели.
 -- Чтобы корректно отсортировать результат дополнительно добавлена колонка с номером недели. 
-select name,week_day,income
+select name,weekday,income
 from (
 		select e.first_name||' '||e.last_name as name,
-				to_char(s.sale_date,'day') as week_day,
+				to_char(s.sale_date,'day') as weekday,
 				extract(ISODOW from s.sale_date) as num_day,
 				round(sum(p.price* s.quantity),0) as income
 		from sales s inner join employees e on s.sales_person_id = e.employee_id 
@@ -72,7 +73,7 @@ order by age_category
 
 --Задача customers_by_month
 --В данном запросе произведение двух таблиц, для того, чтобы посчитать уникальное количество клиентов и сумма выручки, которую принес каждый клиент в разрезе месяца и года
-select to_char(s.sale_date,'YYYY-MM') as date , count(distinct customer_id) AS total_customers, SUM(s.quantity*p.price) as income
+select to_char(s.sale_date,'YYYY-MM') as date , count(distinct customer_id) AS total_customers, round(SUM(s.quantity*p.price),0) as income
 from sales s JOIN products p ON s.product_id=p.product_id
 group by 1
 order by date asc
