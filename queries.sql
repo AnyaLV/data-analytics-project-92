@@ -36,13 +36,13 @@ with table1 as (
 				select e.first_name||' '||e.last_name as name,
 						round(avg(p.price* s.quantity),0) as average_income,
 						round(sum(p.price* s.quantity),0) as income
-				from sales s inner join employees e on s.sales_person_id = e.employee_id 
-							inner join products p on s.product_id = p.product_id 
+				from sales s left join employees e on s.sales_person_id = e.employee_id 
+							left join products p on s.product_id = p.product_id 
 				group by 1
 				)
 select name, average_income
 from table1
-where income < (select avg(income)from table1)
+where average_income < (select avg(average_income)from table1)
 order by average_income asc
 
 --Задача day_of_the_week_income
@@ -73,7 +73,7 @@ order by age_category
 
 --Задача customers_by_month
 --В данном запросе произведение двух таблиц, для того, чтобы посчитать уникальное количество клиентов и сумма выручки, которую принес каждый клиент в разрезе месяца и года
-select to_char(s.sale_date,'YYYY-MM') as date , count(distinct customer_id) AS total_customers, round(SUM(s.quantity*p.price),0) as income
+select to_char(s.sale_date,'YYYY-MM') as date , count(distinct customer_id) AS total_customers, round(floor(SUM(s.quantity*p.price)),0) as income
 from sales s JOIN products p ON s.product_id=p.product_id
 group by 1
 order by date asc
